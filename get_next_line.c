@@ -1,166 +1,139 @@
-/*
-
-Use read function for reading each charecter from file, checking for '\n' or EOF
-if there were 10 chars create new node
-
-*/
-
 #include "get_next_line.h"
-
-int print_file(int fd)
-{
-	char c[1];
-
-	while (read(fd, &c, 1) > 0)
-	{
-		if (c[0] == '\n')
-			printf("heyheyhey\n");
-		printf("%c", c[0]);
-				
-	}
-	return (0);
-}
-
-int lst_size(t_list *lst)
-{
-	int	count;
-
-	count = 0;
-	while (lst)
-	{
-		count++;
-		lst = lst -> next;
-	}
-	return (count);
-}
+#include <fcntl.h>
 
 t_list *create_node(char *str)
 {
 	t_list *node;
+	
+	node = malloc(sizeof(t_list));
+	if (!node)
+		return (NULL);
 	node -> content = str;
 	node -> next = NULL;
-	printf("I'm %d\n", __LINE__);
 	return (node);
 }
 
-t_list *lstlast(t_list *lst)
+void add_to_list(t_list **lst, t_list *node)
 {
-	while (lst -> next)
-		lst = lst -> next;
-	return lst;
-}
-
-void lst_add_last(t_list **lst, t_list *new)
-{
-	t_list	*node;
-// printf("I'm %d\n", __LINE__);
-	if (!(*lst))
+	t_list *tmp;
+	
+	tmp = *lst;
+	if (!tmp)
 	{
-		printf("I'm %d\n", __LINE__);
-		*lst = new;
-		printf("This is in list: %s\n", (*lst) -> content);
+		*lst = node;
 		return ;
 	}
-	// printf("I'm %d\n", __LINE__);
-	node = lstlast(*lst);
-	node -> next = new;
-	printf("abcd\n");
+	while (tmp -> next)
+		tmp = tmp -> next;
+	tmp -> next = node;
 }
 
-int read_buffer_size_bytes(int fd, t_list **lst)
+void print_list(t_list *lst)
+{
+	while (lst)
+	{
+		printf("I'm list's item: %s\n", lst->content);
+		lst = lst -> next;
+	}
+}
+void create_list(t_list **lst, int fd)
 {
 	char *str;
 	int i;
-
-	i = 0;
-	str = malloc((BUFFER_SIZE + 1) * sizeof(char));
-	if (!str)
-		return (0);
-	while (i < BUFFER_SIZE && read(fd, (str + i), 1))
+	
+	int flag = 1;
+	while (flag)
 	{
-		if (str[i] == '\n')
-			break ;
-		i++;
+		i = 0;
+		str = malloc((BUFFER_SIZE + 1) * sizeof(char));
+		if (!str)
+			return ;
+		while (i < BUFFER_SIZE && read(fd, (str + i), 1) >= 0)
+		{
+			if (!str[i] || str[i] == '\n')
+			{
+				flag = 0;
+				break ;
+			}
+			i++;
+		}
+		//create node
+		t_list *node = create_node(str);
+		printf("This is node's content: %s\n", node -> content);
+		//append that tode to list
+		add_to_list(lst, node);
+		print_list(*lst);
 	}
-	printf("%s\n", str);
-	printf("I'm %d\n", __LINE__);
-	lst_add_last(lst, create_node(str));
-	printf("I'm %d\n", __LINE__);
-	if (i == BUFFER_SIZE)
-		return (1);
-	printf("I'm %d\n", __LINE__);
-	return (0);
 }
-
-int str_len(t_list *lst)
+int len_of_str(t_list *lst)
 {
 	int len;
 	int i;
 
-	i = 0;
-	printf("I'm %d\n", __LINE__);
 	len = 0;
 	while (lst)
 	{
-		printf("I'm %d\n", __LINE__);
-		printf("here i am\n");
-		while (lst -> content && lst -> content[i])
+		i = 0;
+		while (lst -> content[i])
 		{
 			len++;
 			i++;
-			printf("%d %d\n", __LINE__, lst -> content[i]);
 		}
 		lst = lst -> next;
 	}
-	printf("this is len: %d\n", len);
 	return (len);
 }
-char *fill_str(char *str, t_list *lst)
+
+char *get_line(t_list *lst)
 {
+	int str_len;
+	char *line;	
+	int j;
+	t_list *tmp;
 	int i;
 
-	i = 0;
+	j = 0;
+	str_len = len_of_str(lst);
+	printf("Len of the line: %d\n", str_len);
+	line = malloc((str_len + 1) * sizeof(char));
+	if (!line)
+		return (NULL);
 	while (lst)
 	{
-		while (lst -> content)
+		i = 0;
+		while (lst -> content[i])
 		{
-			str[i] = *(lst -> content);
+			line[j] = lst -> content[i];
 			i++;
-			lst -> content++;
+			j++;
 		}
-		lst = lst -> next;
+		tmp = lst ->next;
+		free(lst);
+		lst = tmp;
 	}
-	return (str);
-}
-
-char *create_line(t_list *lst)
-{
-	int len;
-	char *str;
-
-	printf("I'm %d\n", __LINE__);
-	len = str_len(lst);
-	printf("Len of the str: %d\n", len);
-	str = malloc((len + 1) * sizeof(char));
-	if (!str)
-		return (NULL);
-	fill_str(str, lst);
-	return (str);
+	return (line);
 }
 
 char *get_next_line(int fd)
 {
-	static t_list *lst;
+	t_list *lst = NULL;
+	char *next_line;
 
-	int flag = 0;
-	while (!flag)
-	{
-		if (!read_buffer_size_bytes(fd, &lst))
-		{
-			printf("I'm %d\n", __LINE__);
-			flag = 1;
-			return (create_line(lst));
-		}
-	}
-	return(0);
+	create_list(&lst, fd);
+	next_line = get_line(lst);
+	lst = NULL;
+	return (next_line);
+}
+
+
+
+int main()
+{
+	int fd = open("file.txt", O_RDONLY);
+	if (!fd)
+		return (0);
+	printf("This is the result: %s\n", get_next_line(fd));	
+	printf("This is the result: %s\n", get_next_line(fd));	
+	printf("This is the result: %s\n", get_next_line(fd));	
+	printf("This is the result: %s\n", get_next_line(fd));	
 }
