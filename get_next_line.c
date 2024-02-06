@@ -1,6 +1,7 @@
 #include "get_next_line.h"
 #include <fcntl.h>
 #include <stdio.h>
+#include <string.h>
 
 t_list *new_node(char *content)
 {
@@ -69,7 +70,8 @@ char *create_list(t_list **lst, int fd)
 	while (bytes_read == BUFFER_SIZE)
 	{
 		bytes_read = read(fd, str, BUFFER_SIZE);
-		add_to_list(lst, str);
+		str[bytes_read] = '\0';
+		add_to_list(lst, strdup(str));
 		start = look_for_newline(str);
 		if (start)
 			return (str + start);
@@ -89,6 +91,7 @@ char *get_next_line(int fd)
 	tail = create_list(&lst, fd);
 	print_list(lst);
 	printf("This is tail: %s\n", tail);
+	return (0);
 	//return(next_line);
 }
 
