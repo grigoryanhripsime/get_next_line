@@ -74,25 +74,36 @@ char *create_list(t_list **lst, int fd)
 		add_to_list(lst, strdup(str));
 		start = look_for_newline(str);
 		if (start)
-			return (str + start);
+			return (strdup(str + start));
 	}
 	return (0);
+}
+
+int s
+
+char *create_line(t_list *lst)
+{
+
 }
 
 char *get_next_line(int fd)
 {
 	char *next_line;
 	static t_list *lst;
-	char *tail;	
+	static char *tail;	
 
 	printf("fd: %d, BS: %d, read: %lu\n", fd, BUFFER_SIZE, read(fd, next_line, 0));
 	if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, next_line, 0) < 0)
 		return (0);
+	if (tail)
+	{
+		add_to_list(&lst, tail);
+	}
 	tail = create_list(&lst, fd);
 	print_list(lst);
 	printf("This is tail: %s\n", tail);
-	return (0);
-	//return(next_line);
+	next_line = create_line(lst);
+	return(next_line);
 }
 
 int main()
