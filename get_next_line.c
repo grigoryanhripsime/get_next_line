@@ -3,33 +3,25 @@
 #include <stdio.h>
 #include <string.h>
 
-t_list *new_node(char *content)
-{
-	t_list *node;
-	
-	node = malloc(sizeof(t_list));
-	if (!node)
-		return (NULL);
-	node -> content = content;
-	node -> next = NULL;
-	return (node);
-}
-
 void add_to_list(t_list **lst, char *str)
 {
 	t_list *node;
+	t_list *new;
 	
+	new = malloc(sizeof(t_list));
+	if (!new)
+		return ;
+	new -> content = str;
+	new -> next = NULL;	
 	node = *lst;
 	if (!node)
 	{
-		//printf("%d, %s\n", __LINE__, str);
-		*lst = new_node(str);
+		*lst = new;
 		return ;
 	}
 	while (node -> next)
 		node = node -> next;
-	//printf("%d, %s\n", __LINE__, str);
-	node -> next = new_node(str);
+	node -> next = new;
 }
 
 int look_for_newline(char *str)
@@ -57,32 +49,27 @@ void print_list(t_list *lst)
 		lst = lst -> next;
 	}
 }
-char *create_list(t_list **lst, int fd)
+void create_list(t_list **lst, int fd)
 {
 	char *str;
 	int bytes_read;
-	int start;
 
 	bytes_read = BUFFER_SIZE;
 	str = malloc((BUFFER_SIZE + 1) * sizeof(char));
 	if (!str)
-		return (NULL);
+		return ;
 	while (bytes_read == BUFFER_SIZE)
 	{
 		bytes_read = read(fd, str, BUFFER_SIZE);
 		if (bytes_read <= 0)
-		{
-			printf("aaaaa\n");
-			str[0] = '\0';
-			return (str);
+		{	
+			free(str);
+			return ;
 		}
 		str[bytes_read] = '\0';
 		add_to_list(lst, strdup(str));
-		start = look_for_newline(str);
-		if (start)
-			return (strdup(str + start));
 	}
-	return (NULL);
+	return ;
 }
 
 int str_len(t_list *lst)
@@ -94,17 +81,15 @@ int str_len(t_list *lst)
 	while (lst)
 	{
 		i = 0;
-		while (lst -> content[i] && lst)
+		while (lst -> content[i])
 		{
-			len++;
-			i++;
 			if (lst -> content[i] == '\n')
 			{
-				i++;
 				len++;
-				return (len);;
+				return (len);
 			}
-
+			i++;
+			len++;
 		}
 		lst = lst -> next;
 	}
@@ -118,9 +103,10 @@ char *create_line(t_list *lst)
 	int i;
 	int j;
 
+	if (!lst)
+		return (0);
 	j = 0;
 	len = str_len(lst);
-	//printf("Len of the str: %d\n", len);
 	line = malloc((len + 1) * sizeof(char));
 	if (!line)
 		return (NULL);
@@ -136,9 +122,8 @@ char *create_line(t_list *lst)
 			i++;
 		}
 		lst = lst -> next;
-		printf("I'm here %d\n", j);
-		line[j] = '\0';
 	}
+	line[j] = '\0';
 	return (line);
 }
 
@@ -146,7 +131,6 @@ void clear_list(t_list **lst)
 {
 	t_list *tmp;
 	
-	tmp = *lst;
 	while (*lst)
 	{
 		tmp = (*lst) -> next;
@@ -160,29 +144,21 @@ char *get_next_line(int fd)
 {
 	char *next_line;
 	static t_list *lst;
-	static char *tail;	
 
 	next_line = NULL;
-	//printf("fd: %d, BS: %d, read: %lu\n", fd, BUFFER_SIZE, read(fd, next_line, 0));
 	if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, next_line, 0) < 0)
 		return (NULL);
-	if (tail)
-	{
-		add_to_list(&lst, tail);
-	}
-	tail = create_list(&lst, fd);
+	create_list(&lst, fd);
 	print_list(lst);
-	//printf("This is tail: %s\n", tail);
 	next_line = create_line(lst);
-	//printf("%s\n", next_line);
 	clear_list(&lst);
-	printf("%d, %lu\n", next_line[0], strlen(next_line));
-	return (next_line);
+	return (0);
 }
-
+/*
 int main()
 {
 	int fd = open("gnlTester/files/empty", O_RDWR);
 	printf("%d\n", get_next_line(fd) == NULL);
 	//printf("Res: %s", get_next_line(fd));
 }
+*/
