@@ -49,6 +49,7 @@ void print_list(t_list *lst)
 		lst = lst -> next;
 	}
 }
+
 void create_list(t_list **lst, int fd)
 {
 	char *str;
@@ -135,14 +136,16 @@ char *get_tail(t_list *lst)
 	int i = 0;
 	int j;
 
-	str = malloc((BUFFER_SIZE + 1) * sizeof(char));
-	if (!str || !lst)
+	if (!lst)
 		return (0);
 	while (lst -> next)
 		lst = lst -> next;
 	j = 0;
 	while (lst -> content && lst -> content[j] && lst -> content[j] != '\n')
 		j++;
+	str = malloc((BUFFER_SIZE + 1) * sizeof(char));
+	if (!str)
+		return (0);
 	while (lst -> content && lst -> content[j])
 	{
 		str[i] = lst -> content[j];
@@ -157,12 +160,8 @@ void clear_list(t_list **lst)
 {
 	t_list *new;
 	t_list *tmp;
+	char *str;
 
-	new = malloc(sizeof(t_list));
-	if (!new)
-		return ;
-	new -> content = get_tail(*lst);
-	new -> next = NULL;
 	while (*lst)
 	{
 		tmp = (*lst) -> next;
@@ -170,13 +169,27 @@ void clear_list(t_list **lst)
 		free(*lst);
 		(*lst) = tmp;
 	}
-	*lst = new;
+	str = get_tail(*lst);
+	if (!str)
+		*lst = NULL;
+	else
+	{
+		new = malloc(sizeof(t_list));
+		if (!new)
+		{
+			free(str);
+			return ;
+		}
+		new -> content = str;
+		new -> next = NULL;
+		*lst = new;
+	}
 }
 
 char *get_next_line(int fd)
 {
 	char *next_line;
-	static t_list *lst;
+	static t_list *lst = NULL;
 
 	next_line = NULL;
 	if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, next_line, 0) < 0)
@@ -187,12 +200,14 @@ char *get_next_line(int fd)
 	clear_list(&lst);
 	return (next_line);
 }
-/*
+
 int main()
 {
-	int fd = open("gnlTester/files/empty", O_RDONLY);
- 	printf("%s\n", get_next_line(fd));
-	printf("%s", get_next_line(fd));
+	int fd = open("gnlTester/files/nl", O_RDWR);
+	char *str = get_next_line(fd);
+ 	printf("%s", str);
+	free(str);
+	//str = get_next_line(fd);
+	//printf("%s", str);
 	system("leaks a.out");
 }
-*/
