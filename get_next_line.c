@@ -11,6 +11,16 @@ void print_list(t_list *lst)
 		lst = lst -> next;
 	}
 }
+size_t	ft_strlen(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	while (s[i])
+		i++;
+	return (i);
+}
+
 
 char	*ft_strdup(const char *s1)
 {
@@ -19,9 +29,7 @@ char	*ft_strdup(const char *s1)
 	int		i;
 
 	i = 0;
-	s1_size = 0;
-	while (s1[s1_size])
-		s1_size++;
+	s1_size = ft_strlen(s1);
 	s2 = (char *)malloc(s1_size * sizeof(char) + 1);
 	if (!s2)
 		return (NULL);
@@ -72,6 +80,20 @@ int look_for_newline(char *str)
 	return (i);
 }
 
+int there_is_nl(char *str)
+{
+	int i;
+
+	i = 0;
+	while (str[i])
+	{
+		if (str[i] == '\n')
+			return (1);
+		i++;
+	}
+	return (0);
+}
+
 int create_list(t_list **lst, int fd)
 {
 	char *str;
@@ -94,7 +116,7 @@ int create_list(t_list **lst, int fd)
 		str[bytes_read] = '\0';
 		add_to_list(lst, ft_strdup(str));
 		lst_size += look_for_newline(str);
-		if (look_for_newline(str) != BUFFER_SIZE)
+		if (there_is_nl(str))
 			break ;
 	}
 	free(str);
@@ -107,7 +129,7 @@ char *create_line(t_list *lst, int line_len)
 	int i;
 	int j;
 
-	if (!lst)
+	if (!lst || !line_len)
 		return (0);
 	i = 0;
 	str = malloc((line_len + 1) * sizeof(char));
@@ -128,32 +150,42 @@ char *create_line(t_list *lst, int line_len)
 	return (str);
 }
 
-void clear_list(t_list **lst, int line_len)
+void free_list(t_list **lst)
 {
 	t_list *tmp;
 
-	if (!lst)
-		return ;
-	while (line_len >= BUFFER_SIZE && *lst)
+	while (*lst)
 	{
 		tmp = (*lst) -> next;
 		free((*lst) -> content);
 		free(*lst);
 		*lst = tmp;
-		line_len -= BUFFER_SIZE;
 	}
-	while (*lst && *((*lst) -> content))
+}
+int clear_list(t_list **lst)
+{
+	t_list *tmp;
+	int str_len;
+	int before_newline;
+	char *save;
+
+	if (!*lst)
+		return (0);
+	tmp = *lst;
+	save = NULL;
+	while (tmp -> next)
+		tmp = tmp -> next;
+	str_len = ft_strlen(tmp -> content);
+	before_newline = look_for_newline(tmp -> content);
+	if (before_newline && before_newline != str_len)
+		save = ft_strdup((tmp -> content) + before_newline);
+	free_list(lst);
+	if (save && *save)
 	{
-		if (*((*lst) -> content) != '\n')
-		{
-			(*lst) -> content++;
-		}
-		else
-		{
-			(*lst) -> content++;
-			break ;
-		}
+		add_to_list(lst, save);
+		return (ft_strlen(save));
 	}
+	return (0);
 }
 
 char *get_next_line(int fd)
@@ -167,18 +199,19 @@ char *get_next_line(int fd)
 		return (NULL);
 	line_len += create_list(&lst, fd);
 	next_line = create_line(lst, line_len);
-	clear_list(&lst, line_len);
-	line_len = BUFFER_SIZE - (line_len % BUFFER_SIZE);
+	line_len = clear_list(&lst);
 	return (next_line);
 }
 
 int main()
 {
-	int fd = open("gnlTester/files/nl", O_RDWR);
-	char *str = get_next_line(fd);
- 	printf("%s", str);
-	free(str);
-	str = get_next_line(fd);
-	printf("%s", str);
+	int fd = open("gnlTester/files/multiple_nlx5", O_RDWR);
+	// //char *str = get_next_line(fd);
+ 	// printf("%s", str);
+	// free(str);
+	// // str = get_next_line(fd);
+	// // printf("%s", str);
+	printf("%s", get_next_line(fd));
+	printf("%s", get_next_line(fd));
 	//system("leaks a.out");
 }
