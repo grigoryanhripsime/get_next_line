@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   get_next_line.c                                    :+:      :+:    :+:   */
+/*   get_next_line_bonus.c                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: hrigrigo <hrigrigo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/11 14:21:34 by hrigrigo          #+#    #+#             */
-/*   Updated: 2024/02/11 14:38:04 by hrigrigo         ###   ########.fr       */
+/*   Updated: 2024/02/11 14:47:15 by hrigrigo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
+#include "get_next_line_bonus.h"
 
 void	add_to_list(t_list **lst, char *str)
 {
@@ -113,17 +113,17 @@ void	clear_list(t_list **lst)
 
 char	*get_next_line(int fd)
 {
-	static t_list	*lst = NULL;
+	static t_list	*lst[OPEN_MAX];
 	char			*next_line;
 	int				line_len;
 
 	next_line = NULL;
 	if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, next_line, 0) < 0)
 		return (NULL);
-	create_list(&lst, fd);
-	line_len = list_len(lst);
-	next_line = create_line(lst, line_len);
-	clear_list(&lst);
+	create_list(&lst[fd], fd);
+	line_len = list_len(lst[fd]);
+	next_line = create_line(lst[fd], line_len);
+	clear_list(&lst[fd]);
 	return (next_line);
 }
 
@@ -132,8 +132,7 @@ char	*get_next_line(int fd)
 // #include <string.h>
 // int main()
 // {
-// 	int fd = open("file.txt", O_RDWR);	
-//int fd2 = open("file.txt", O_RDWR);
+// 	int fd = open("file.txt", O_RDWR);
 // 	char *str = get_next_line(fd);
 //  	printf("%s", str);
 // 	free(str);
