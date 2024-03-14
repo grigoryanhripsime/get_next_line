@@ -6,7 +6,7 @@
 /*   By: hrigrigo <hrigrigo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/11 14:21:34 by hrigrigo          #+#    #+#             */
-/*   Updated: 2024/02/11 14:47:15 by hrigrigo         ###   ########.fr       */
+/*   Updated: 2024/02/26 18:07:25 by hrigrigo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,6 +56,7 @@ void	create_list(t_list **lst, int fd)
 			break ;
 	}
 	free(str);
+	return ;
 }
 
 char	*create_line(t_list *lst, int line_len)
@@ -88,17 +89,17 @@ char	*create_line(t_list *lst, int line_len)
 void	clear_list(t_list **lst)
 {
 	t_list	*tmp;
-	int		str_len;
 	int		before_nl;
+	char	*str;
 
 	while (*lst)
 	{
-		str_len = ft_strlen((*lst)->content);
 		before_nl = look_for_newline((*lst)->content);
 		if (there_is_nl((*lst)->content))
 		{
+			str = ft_strdup((*lst)->content + before_nl);
 			free((*lst)->content);
-			(*lst)->content = ft_strdup((*lst)->content + before_nl);
+			(*lst)->content = str;
 			return ;
 		}
 		else
